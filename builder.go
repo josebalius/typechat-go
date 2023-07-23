@@ -1,6 +1,7 @@
 package typechat
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -52,10 +53,49 @@ func newline(s string) string {
 	return fmt.Sprintf("%s\n", s)
 }
 
-func nameDef(t reflect.Type) (string, string, error) {
+func interfaceDef(t reflect.Type) (string, error) {
+	if t.Kind() != reflect.Interface {
+		return "", errors.New("top-level type must be an interface")
+	}
+
+	var methods strings.Builder
+	for i := 0; i < t.NumMethod(); i++ {
+		method := t.Method(i)
+		name := method.Name
+		methodParts := []string{name}
+
+		var args []string
+		for j := 0; j < method.Type.NumIn(); j++ {
+			in := method.Type.In(j)
+			args = append(args, in.Name())
+		}
+		methodParts = append(methodParts, fmt.Sprintf("(%s)", strings.Join(args, ", ")))
+
+		var returns []string
+		for j := 0; j < method.Type.NumOut(); j++ {
+			out := method.Type.Out(j)
+			returns = append(returns, out.Name())
+		}
+
+		if len(returns) > 0 {
+			methodParts = append(methodParts, fmt.Sprintf(" (%s)", strings.Join(returns, ", ")))
+		}
+
+		methods.WriteString(fmt.Sprintf("\t%s\n", strings.Join(methodParts, "")))
+	}
+
+	decl := fmt.Sprintf("type %s interface {\n%s}\n", t.Name(), methods.String())
+	return decl, nil
+}
+
+func structDef(t reflect.Type) (string, string, error) {
+	if t.Kind() != reflect.Struct {
+		return "", "", errors.New("top-level type must be a struct")
+	}
+
 	name, decl, err := typeDecls(t)
 	if err != nil {
-		return "", "", fmt.Errorf("failed to define type: %w", err)
+		return "", "", err
 	}
 
 	return name, decl, nil
@@ -84,7 +124,7 @@ func typeStructDecl(t reflect.Type) (string, string, error) {
 		field := t.Field(i)
 		kind := field.Type.Kind()
 
-		if disallowedField(kind) {
+		if disallowedField(field.Type, false) {
 			return "", "", fmt.Errorf("field %s has disallowed type %s", field.Name, kind)
 		}
 
@@ -99,7 +139,7 @@ func typeStructDecl(t reflect.Type) (string, string, error) {
 		if compositeField(kind) {
 			n, decl, err := typeDecls(field.Type)
 			if err != nil {
-				return "", "", fmt.Errorf("failed to define type: %w", err)
+				return "", "", fmt.Errorf("field %s: %w", name, err)
 			}
 			typName = n
 			decls.WriteString(decl)
@@ -118,16 +158,20 @@ func typeSliceArrayDecl(t reflect.Type) (string, string, error) {
 	elem := t.Elem()
 	name := elem.Name()
 	kind := elem.Kind()
-	if disallowedField(kind) {
+	if disallowedField(elem, true) {
 		return "", "", fmt.Errorf("slice element has disallowed type %s", kind)
 	}
 	if compositeField(kind) {
 		n, decl, err := typeDecls(elem)
 		if err != nil {
-			return "", "", fmt.Errorf("failed to define type: %w", err)
+			return "", "", err
 		}
 		name = n
 		decls.WriteString(decl)
+	}
+	if kind == reflect.Interface {
+		// empty interface case aka []any or []interface{}
+		name = "interface{}"
 	}
 
 	name = fmt.Sprintf("[]%s", name)
@@ -145,13 +189,13 @@ func typeMapDecl(t reflect.Type) (string, string, error) {
 	valueName := value.Name()
 	valueKind := value.Kind()
 
-	if disallowedField(keyKind) {
+	if disallowedField(key, false) {
 		return "", "", fmt.Errorf("map key %s has disallowed type %s", keyName, keyKind)
 	}
 	if compositeField(keyKind) {
 		return "", "", fmt.Errorf("map key %s has composite type %s", keyName, keyKind)
 	}
-	if disallowedField(valueKind) {
+	if disallowedField(value, false) {
 		return "", "", fmt.Errorf("map value %s has disallowed type %s", valueName, valueKind)
 	}
 	if compositeField(valueKind) {
@@ -174,12 +218,23 @@ func compositeField(k reflect.Kind) bool {
 		k == reflect.Struct
 }
 
-func disallowedField(k reflect.Kind) bool {
-	return k == reflect.Complex64 ||
+func disallowedField(t reflect.Type, allowEmptyInterface bool) bool {
+	k := t.Kind()
+	if k == reflect.Complex64 ||
 		k == reflect.Complex128 ||
 		k == reflect.Chan ||
 		k == reflect.Func ||
-		k == reflect.Interface ||
 		k == reflect.Pointer ||
-		k == reflect.UnsafePointer
+		k == reflect.UnsafePointer {
+		return true
+	}
+
+	if k == reflect.Interface {
+		if t.NumMethod() == 0 && allowEmptyInterface {
+			return false
+		}
+		return true
+	}
+
+	return false
 }

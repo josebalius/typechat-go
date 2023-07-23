@@ -53,39 +53,47 @@ func (p *Prompt[T]) Execute(ctx context.Context) (T, error) {
 		return result, fmt.Errorf("failed to create prompt builder: %w", err)
 	}
 
-	return p.exec(ctx, b)
+	if err := p.exec(ctx, b, &result); err != nil {
+		return result, fmt.Errorf("failed to execute prompt: %w", err)
+	}
+
+	return result, nil
 }
 
 // ExecuteProgram executes the program prompt and parses the result. Parsing errors are retried up to Prompt.retries
 // times.
-func (p *Prompt[T]) ExecuteProgram(ctx context.Context) (T, error) {
-	var result T
+func (p *Prompt[T]) ExecuteProgram(ctx context.Context) (Program, error) {
+	var program Program
 
 	b, err := newBuilder[T](promptProgram, p.prompt)
 	if err != nil {
-		return result, fmt.Errorf("failed to create prompt builder: %w", err)
+		return program, fmt.Errorf("failed to create prompt builder: %w", err)
 	}
 
-	return p.exec(ctx, b)
+	if err := p.exec(ctx, b, &program); err != nil {
+		return program, fmt.Errorf("failed to execute prompt: %w", err)
+	}
+
+	return program, nil
 }
 
-func (p *Prompt[T]) exec(ctx context.Context, b *builder[T]) (T, error) {
-	var result T
+func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
 	prompt, err := b.string()
+	fmt.Println(prompt)
 	if err != nil {
-		return result, fmt.Errorf("failed to build prompt: %w", err)
+		return fmt.Errorf("failed to build prompt: %w", err)
 	}
 
 	for i := 0; i < p.retries; i++ {
 		resp, err := p.model.Do(ctx, prompt)
 		if err != nil {
-			return result, err
+			return err
 		}
-		if err := json.Unmarshal(resp, &result); err != nil {
+		if err := json.Unmarshal(resp, output); err != nil {
 			prompt = b.repair(resp, err)
 			continue
 		}
 	}
 
-	return result, nil
+	return nil
 }

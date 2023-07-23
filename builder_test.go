@@ -22,7 +22,7 @@ func TestNameDef(t *testing.T) {
 			C bool
 		}
 
-		name, def, err := nameDef(reflect.TypeOf(Foo{}))
+		name, def, err := structDef(reflect.TypeOf(Foo{}))
 		if err != nil {
 			t.Fatalf("expected err to be nil, got %s", err)
 		}
@@ -46,7 +46,7 @@ type Foo struct {
 			Field string `json:"field"`
 		}
 
-		_, def, err := nameDef(reflect.TypeOf(Foo{}))
+		_, def, err := structDef(reflect.TypeOf(Foo{}))
 		if err != nil {
 			t.Fatalf("expected err to be nil, got %s", err)
 		}
@@ -69,7 +69,7 @@ type Foo struct {
 			Foo Foo
 		}
 
-		name, def, err := nameDef(reflect.TypeOf(Bar{}))
+		name, def, err := structDef(reflect.TypeOf(Bar{}))
 		if err != nil {
 			t.Fatalf("expected err to be nil, got %s", err)
 		}
@@ -101,7 +101,7 @@ type Bar struct {
 			B []Bar
 		}
 
-		_, def, err := nameDef(reflect.TypeOf(Foo{}))
+		_, def, err := structDef(reflect.TypeOf(Foo{}))
 		if err != nil {
 			t.Fatalf("expected err to be nil, got %s", err)
 		}
@@ -127,7 +127,7 @@ type Foo struct {
 			B map[string]Bar
 		}
 
-		_, def, err := nameDef(reflect.TypeOf(Foo{}))
+		_, def, err := structDef(reflect.TypeOf(Foo{}))
 		if err != nil {
 			t.Fatalf("expected err to be nil, got %s", err)
 		}
@@ -153,7 +153,7 @@ type Foo struct {
 			B map[string]map[string]Bar
 		}
 
-		_, def, err := nameDef(reflect.TypeOf(Foo{}))
+		_, def, err := structDef(reflect.TypeOf(Foo{}))
 		if err != nil {
 			t.Fatalf("expected err to be nil, got %s", err)
 		}
@@ -166,6 +166,24 @@ type Foo struct {
 	A []int
 	B map[string]map[string]Bar
 }`
+		assertNameDefOuptut(t, def, expected)
+	})
+
+	t.Run("it supports slice interfaces", func(t *testing.T) {
+		type Foo struct {
+			Params []any
+		}
+
+		_, def, err := structDef(reflect.TypeOf(Foo{}))
+		if err != nil {
+			t.Fatalf("expected err to be nil, got %s", err)
+		}
+
+		expected := `
+type Foo struct {
+	Params []interface{}
+}`
+
 		assertNameDefOuptut(t, def, expected)
 	})
 

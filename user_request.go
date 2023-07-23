@@ -30,7 +30,7 @@ func (b *userRequest[T]) string() (string, error) {
 
 	var sb strings.Builder
 	var schema T
-	name, def, err := nameDef(reflect.TypeOf(schema))
+	name, def, err := structDef(reflect.TypeOf(schema))
 	if err != nil {
 		return "", err
 	}
