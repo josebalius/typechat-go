@@ -44,8 +44,8 @@ func (b *program[T]) string() (string, error) {
 		return "", err
 	}
 
-	writeLine(sb, b.schema(name, def))
-	writeLine(sb, b.prompt())
+	sb.WriteString(newline(b.schema(name, def)))
+	sb.WriteString(newline(b.prompt()))
 	b.built = sb.String()
 
 	return b.built, nil
@@ -53,19 +53,19 @@ func (b *program[T]) string() (string, error) {
 
 func (b *program[T]) prompt() string {
 	var sb strings.Builder
-	writeLine(sb, "The following is a user request:")
-	writeLine(sb, b.builder.input)
-	writeLine(sb, programPromptInstructions)
+	sb.WriteString(newline("The following is a user request:"))
+	sb.WriteString(newline(b.builder.input))
+	sb.WriteString(newline(programPromptInstructions))
 
 	return sb.String()
 }
 
 func (b *program[T]) schema(name, def string) string {
 	var sb strings.Builder
-	writeLine(sb, programSchemaInstructions)
-	writeLine(sb, programText)
-	writeLine(sb, "The programs can call functions from the API defined in the following Go definitions:")
-	writeLine(sb, def)
+	sb.WriteString(newline(programSchemaInstructions))
+	sb.WriteString(newline(programText))
+	sb.WriteString(newline("The programs can call functions from the API defined in the following Go definitions:"))
+	sb.WriteString(newline(def))
 
 	return sb.String()
 }

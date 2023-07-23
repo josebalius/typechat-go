@@ -35,8 +35,8 @@ func (b *userRequest[T]) string() (string, error) {
 		return "", err
 	}
 
-	writeLine(sb, b.schema(name, def))
-	writeLine(sb, b.prompt())
+	sb.WriteString(newline(b.schema(name, def)))
+	sb.WriteString(newline(b.prompt()))
 	b.built = sb.String()
 
 	return b.built, nil
@@ -44,17 +44,17 @@ func (b *userRequest[T]) string() (string, error) {
 
 func (b *userRequest[T]) prompt() string {
 	var sb strings.Builder
-	writeLine(sb, "The following is a user request:")
-	writeLine(sb, b.builder.input)
-	writeLine(sb, userRequestPromptInstructions)
+	sb.WriteString(newline("The following is a user request:"))
+	sb.WriteString(newline(b.builder.input))
+	sb.WriteString(newline(userRequestPromptInstructions))
 
 	return sb.String()
 }
 
 func (b *userRequest[T]) schema(name, def string) string {
 	var sb strings.Builder
-	writeLine(sb, fmt.Sprintf(userRequestSchemaInstructions, name))
-	writeLine(sb, def)
+	sb.WriteString(newline(fmt.Sprintf(userRequestSchemaInstructions, name)))
+	sb.WriteString(newline(def))
 
 	return sb.String()
 }
