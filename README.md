@@ -81,3 +81,6 @@ This library is under development and still requires more work to solidify the p
 - Provide an adapter package to create out of the box with OpenAI and Azure clients
 - Other use cases such as conversations
 - Figure out best way to stay in sync with the original TypeChat project
+- Setup CI
+
+Get involved! Lots todo!
