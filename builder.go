@@ -13,12 +13,14 @@ type promptBuilder interface {
 
 type builder[T any] struct {
 	input string
+	pt    promptType
 	pb    promptBuilder
 }
 
 func newBuilder[T any](t promptType, input string) (*builder[T], error) {
 	b := &builder[T]{
 		input: input,
+		pt:    t,
 	}
 
 	var pb promptBuilder
@@ -42,9 +44,16 @@ func (b *builder[T]) string() (string, error) {
 func (b *builder[T]) repair(resp []byte, err error) string {
 	var sb strings.Builder
 	sb.WriteString(newline(string(resp)))
-	sb.WriteString(newline("The JSON object is invalid for the following reason:"))
-	sb.WriteString(newline(err.Error()))
-	sb.WriteString(newline("The following is a revised JSON object:"))
+
+	if b.pt == promptUserRequest {
+		sb.WriteString(newline("The JSON object is invalid for the following reason:"))
+		sb.WriteString(newline(err.Error()))
+		sb.WriteString(newline("The following is a revised JSON object:"))
+	} else {
+		sb.WriteString(newline("The JSON program object is invalid for the following reason:"))
+		sb.WriteString(newline(err.Error()))
+		sb.WriteString(newline("The following is a revised JSON program object:"))
+	}
 
 	return sb.String()
 }

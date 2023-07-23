@@ -43,8 +43,8 @@ func NewPrompt[T any](model client, prompt string, opts ...opt[T]) *Prompt[T] {
 	return t
 }
 
-// Execute executes the user request prompt and parses the result. Parsing errors are retried up to Prompt.retries
-// times.
+// Execute executes the user prompt and parses the result into the given structure. Parsing errors are retried up to
+// Prompt.retries times.
 func (p *Prompt[T]) Execute(ctx context.Context) (T, error) {
 	var result T
 
@@ -60,9 +60,10 @@ func (p *Prompt[T]) Execute(ctx context.Context) (T, error) {
 	return result, nil
 }
 
-// ExecuteProgram executes the program prompt and parses the result. Parsing errors are retried up to Prompt.retries
-// times.
-func (p *Prompt[T]) ExecuteProgram(ctx context.Context) (Program, error) {
+// CreateProgram executes the prompt with the provided API and parses the result into a typechat.Program to be used
+// by callers. Refer to the Program struct for structure. Steps will refer to methods provided in the API interface.
+// Parsing errors are retried up to Prompt.retries times.
+func (p *Prompt[T]) CreateProgram(ctx context.Context) (Program, error) {
 	var program Program
 
 	b, err := newBuilder[T](promptProgram, p.prompt)
@@ -83,6 +84,7 @@ func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
 		return fmt.Errorf("failed to build prompt: %w", err)
 	}
 
+	var failedParsing bool
 	for i := 0; i < p.retries; i++ {
 		resp, err := p.model.Do(ctx, prompt)
 		if err != nil {
@@ -90,8 +92,12 @@ func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
 		}
 		if err := json.Unmarshal(resp, output); err != nil {
 			prompt = b.repair(resp, err)
+			failedParsing = true
 			continue
 		}
+	}
+	if failedParsing {
+		return fmt.Errorf("failed to parse prompt response with %d retries", p.retries)
 	}
 
 	return nil
