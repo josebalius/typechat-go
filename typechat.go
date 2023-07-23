@@ -79,7 +79,6 @@ func (p *Prompt[T]) ExecuteProgram(ctx context.Context) (Program, error) {
 
 func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
 	prompt, err := b.string()
-	fmt.Println(prompt)
 	if err != nil {
 		return fmt.Errorf("failed to build prompt: %w", err)
 	}
