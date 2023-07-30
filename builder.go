@@ -41,9 +41,9 @@ func (b *builder[T]) string() (string, error) {
 	return b.pb.string()
 }
 
-func (b *builder[T]) repair(resp []byte, err error) string {
+func (b *builder[T]) repair(resp string, err error) string {
 	var sb strings.Builder
-	sb.WriteString(newline(string(resp)))
+	sb.WriteString(newline(resp))
 
 	if b.pt == promptUserRequest {
 		sb.WriteString(newline("The JSON object is invalid for the following reason:"))

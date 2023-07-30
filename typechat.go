@@ -7,7 +7,7 @@ import (
 )
 
 type client interface {
-	Do(ctx context.Context, prompt string) (response []byte, err error)
+	Do(ctx context.Context, prompt string) (response string, err error)
 }
 
 // Prompt is a generic typechat prompt.
@@ -90,7 +90,7 @@ func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
 		if err != nil {
 			return err
 		}
-		if err := json.Unmarshal(resp, output); err != nil {
+		if err := json.Unmarshal([]byte(resp), output); err != nil {
 			prompt = b.repair(resp, err)
 			failedParsing = true
 			continue
