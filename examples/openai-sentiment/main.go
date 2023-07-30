@@ -33,8 +33,12 @@ func (s Sentiment) String() string {
 }
 
 type SentimentAnalysis struct {
-	Sentiment  Sentiment
+	Sentiment  Sentiment `description:"0=positive, 1=negative, 2=neutral"`
 	Confidence float64
+}
+
+func (s SentimentAnalysis) String() string {
+	return fmt.Sprintf("%s (%.2f)", s.Sentiment, s.Confidence)
 }
 
 func main() {
@@ -55,5 +59,5 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("Sentiment: %s\n", analysis.Sentiment)
+	fmt.Printf("Analysis: %s\n", analysis)
 }

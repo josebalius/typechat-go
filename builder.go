@@ -137,10 +137,16 @@ func typeStructDecl(t reflect.Type) (string, string, error) {
 			return "", "", fmt.Errorf("field %s has disallowed type %s", field.Name, kind)
 		}
 
-		jsonTag := field.Tag.Get("json")
-		var jsonTagDef string
-		if jsonTag != "" {
-			jsonTagDef = fmt.Sprintf(" `json:\"%s\"`", jsonTag)
+		var structTags []string
+		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
+			structTags = append(structTags, fmt.Sprintf("json:\"%s\"", jsonTag))
+		}
+		if descriptionTag := field.Tag.Get("description"); descriptionTag != "" {
+			structTags = append(structTags, fmt.Sprintf("description:\"%s\"", descriptionTag))
+		}
+		var structTag string
+		if len(structTags) > 0 {
+			structTag = fmt.Sprintf(" `%s`", strings.Join(structTags, " "))
 		}
 
 		name := field.Name
@@ -154,7 +160,7 @@ func typeStructDecl(t reflect.Type) (string, string, error) {
 			decls.WriteString(decl)
 		}
 
-		fields.WriteString(fmt.Sprintf("\t%s %s%s\n", name, typName, jsonTagDef))
+		fields.WriteString(fmt.Sprintf("\t%s %s%s\n", name, typName, structTag))
 	}
 
 	decls.WriteString(fmt.Sprintf("type %s struct {\n%s}\n", name, fields.String()))
