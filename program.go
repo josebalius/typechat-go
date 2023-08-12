@@ -24,12 +24,12 @@ indentation and no properties with the value undefined:`
 )
 
 type program[T any] struct {
-	builder *builder[T]
+  input string
 	built   string
 }
 
-func newProgram[T any](b *builder[T]) *program[T] {
-	return &program[T]{builder: b}
+func newProgram[T any](i string) *program[T] {
+  return &program[T]{input: i}
 }
 
 func (b *program[T]) string() (string, error) {
@@ -61,7 +61,7 @@ func (b *program[T]) string() (string, error) {
 func (b *program[T]) prompt() string {
 	var sb strings.Builder
 	sb.WriteString(newline("The following is a user request:"))
-	sb.WriteString(newline(b.builder.input))
+	sb.WriteString(newline(b.input))
 	sb.WriteString(newline(programPromptInstructions))
 
 	return sb.String()
