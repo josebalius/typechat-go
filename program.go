@@ -24,7 +24,7 @@ indentation and no properties with the value undefined:`
 )
 
 type program[T any] struct {
-  input string
+	input string
 	built   string
 }
 
