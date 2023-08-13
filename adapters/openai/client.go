@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/josebalius/typechat-go"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -19,15 +20,40 @@ func NewClient(client *openai.Client, model string) *Client {
 	}
 }
 
-func (c *Client) Do(ctx context.Context, prompt string) (string, error) {
+func openaiRole(r typechat.Role) (string, error) {
+	var role string
+	switch r {
+	case typechat.RoleUser:
+		role = openai.ChatMessageRoleUser
+	case typechat.RoleSystem:
+		role = openai.ChatMessageRoleSystem
+	case typechat.RoleAssistant:
+		role = openai.ChatMessageRoleAssistant
+	default:
+		return "", errors.New("invalid role")
+	}
+
+	return role, nil
+}
+
+func (c *Client) Do(ctx context.Context, prompt []typechat.Message) (string, error) {
+	var messages []openai.ChatCompletionMessage
+	for _, m := range prompt {
+		role, err := openaiRole(m.Role)
+		if err != nil {
+			return "", err
+		}
+
+		msg := openai.ChatCompletionMessage{
+			Role:    role,
+			Content: m.Content,
+		}
+		messages = append(messages, msg)
+	}
+
 	params := openai.ChatCompletionRequest{
-		Model: c.model,
-		Messages: []openai.ChatCompletionMessage{
-			{
-				Role:    openai.ChatMessageRoleUser,
-				Content: prompt,
-			},
-		},
+		Model:    c.model,
+		Messages: messages,
 	}
 	resp, err := c.client.CreateChatCompletion(ctx, params)
 	if err != nil {
