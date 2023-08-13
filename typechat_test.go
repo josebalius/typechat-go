@@ -7,11 +7,11 @@ import (
 )
 
 type mockModelClient struct {
-	response []byte
+	response string
 	err      error
 }
 
-func (m mockModelClient) Do(ctx context.Context, prompt string) ([]byte, error) {
+func (m mockModelClient) Do(ctx context.Context, prompt string) (response string, err error) {
 	return m.response, m.err
 }
 
@@ -23,7 +23,7 @@ func TestTypeChat(t *testing.T) {
 	t.Run("it should generate the prompt and return the result", func(t *testing.T) {
 		ctx := context.Background()
 		m := mockModelClient{
-			response: []byte(`{"sentiment": "positive"}`),
+			response: `{"sentiment": "positive"}`,
 		}
 		p := NewPrompt[Result](m, "That game was awesome!")
 		result, err := p.Execute(ctx)
@@ -72,10 +72,10 @@ func TestTypeChat(t *testing.T) {
 			t.Errorf("Expected no error, got %v", err)
 		}
 		m := mockModelClient{
-			response: b,
+			response: string(b),
 		}
 		p := NewPrompt[API](m, "")
-		result, err := p.ExecuteProgram(ctx)
+		result, err := p.CreateProgram(ctx)
 		if err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		}

@@ -26,9 +26,9 @@ func newBuilder[T any](t promptType, input string) (*builder[T], error) {
 	var pb promptBuilder
 	switch t {
 	case promptUserRequest:
-		pb = newUserRequest[T](b)
+		pb = newUserRequest[T](input)
 	case promptProgram:
-		pb = newProgram[T](b)
+		pb = newProgram[T](input)
 	default:
 		return nil, fmt.Errorf("unknown prompt type %s", t)
 	}

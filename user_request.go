@@ -15,12 +15,12 @@ indentation and no properties with the value undefined:`
 )
 
 type userRequest[T any] struct {
-	builder *builder[T]
+	input string
 	built   string
 }
 
-func newUserRequest[T any](b *builder[T]) *userRequest[T] {
-	return &userRequest[T]{builder: b}
+func newUserRequest[T any](i string) *userRequest[T] {
+  return &userRequest[T]{input: i}
 }
 
 func (b *userRequest[T]) string() (string, error) {
@@ -45,7 +45,7 @@ func (b *userRequest[T]) string() (string, error) {
 func (b *userRequest[T]) prompt() string {
 	var sb strings.Builder
 	sb.WriteString(newline("The following is a user request:"))
-	sb.WriteString(newline(b.builder.input))
+	sb.WriteString(newline(b.input))
 	sb.WriteString(newline(userRequestPromptInstructions))
 
 	return sb.String()
