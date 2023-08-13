@@ -11,7 +11,7 @@ type mockModelClient struct {
 	err      error
 }
 
-func (m mockModelClient) Do(ctx context.Context, prompt string) (response string, err error) {
+func (m mockModelClient) Do(ctx context.Context, prompt []Message) (response string, err error) {
 	return m.response, m.err
 }
 

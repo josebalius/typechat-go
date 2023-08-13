@@ -24,47 +24,48 @@ indentation and no properties with the value undefined:`
 )
 
 type program[T any] struct {
-	input string
-	built   string
+	input    string
+	messages []Message
 }
 
 func newProgram[T any](i string) *program[T] {
-  return &program[T]{input: i}
+	return &program[T]{input: i}
 }
 
-func (b *program[T]) string() (string, error) {
-	if b.built != "" {
-		return b.built, nil
+func (b *program[T]) prompt() ([]Message, error) {
+	if b.messages != nil {
+		return b.messages, nil
 	}
 
-	var sb strings.Builder
 	schema := new(T)
-
 	schemaElem := reflect.TypeOf(schema).Elem()
 	def, err := interfaceDef(schemaElem)
 	if err != nil {
-		return "", fmt.Errorf("failed to get definition of schema: %w", err)
+		return nil, fmt.Errorf("failed to get definition of schema: %w", err)
 	}
 
 	schemaPrompt, err := b.schema(def)
 	if err != nil {
-		return "", fmt.Errorf("failed to build schema: %w", err)
+		return nil, fmt.Errorf("failed to build schema: %w", err)
 	}
 
-	sb.WriteString(schemaPrompt)
-	sb.WriteString(b.prompt())
-	b.built = sb.String()
+	b.messages = append(b.messages, newSystemMessage(schemaPrompt))
+	b.messages = append(b.messages, newUserMessage(b.userMessage()))
+	b.messages = append(b.messages, newSystemMessage(b.instructions()))
 
-	return b.built, nil
+	return b.messages, nil
 }
 
-func (b *program[T]) prompt() string {
+func (b *program[T]) userMessage() string {
 	var sb strings.Builder
 	sb.WriteString(newline("The following is a user request:"))
 	sb.WriteString(newline(b.input))
-	sb.WriteString(newline(programPromptInstructions))
 
 	return sb.String()
+}
+
+func (b *program[T]) instructions() string {
+	return programPromptInstructions
 }
 
 func (b *program[T]) schema(def string) (string, error) {

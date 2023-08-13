@@ -6,8 +6,48 @@ import (
 	"fmt"
 )
 
+type Role struct {
+	name string
+}
+
+func (r Role) String() string {
+	return r.name
+}
+
+var (
+	RoleUser      = Role{name: "user"}
+	RoleSystem    = Role{name: "system"}
+	RoleAssistant = Role{name: "assistant"}
+)
+
+type Message struct {
+	Content string
+	Role    Role
+}
+
+func newSystemMessage(content string) Message {
+	return Message{
+		Content: content,
+		Role:    RoleSystem,
+	}
+}
+
+func newUserMessage(content string) Message {
+	return Message{
+		Content: content,
+		Role:    RoleUser,
+	}
+}
+
+func newAssistantMessage(content string) Message {
+	return Message{
+		Content: content,
+		Role:    RoleAssistant,
+	}
+}
+
 type client interface {
-	Do(ctx context.Context, prompt string) (response string, err error)
+	Do(ctx context.Context, prompt []Message) (response string, err error)
 }
 
 // Prompt is a generic typechat prompt.
@@ -79,7 +119,7 @@ func (p *Prompt[T]) CreateProgram(ctx context.Context) (Program, error) {
 }
 
 func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
-	prompt, err := b.string()
+	prompt, err := b.prompt()
 	if err != nil {
 		return fmt.Errorf("failed to build prompt: %w", err)
 	}
@@ -90,12 +130,18 @@ func (p *Prompt[T]) exec(ctx context.Context, b *builder[T], output any) error {
 		if err != nil {
 			return err
 		}
+
 		if err := json.Unmarshal([]byte(resp), output); err != nil {
-			prompt = b.repair(resp, err)
+			prompt, err = b.repair(resp, err)
+			if err != nil {
+				return fmt.Errorf("failed to repair prompt: %w", err)
+			}
+
 			failedParsing = true
 			continue
 		}
 	}
+
 	if failedParsing {
 		return fmt.Errorf("failed to parse prompt response with %d retries", p.retries)
 	}

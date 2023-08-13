@@ -15,40 +15,42 @@ indentation and no properties with the value undefined:`
 )
 
 type userRequest[T any] struct {
-	input string
-	built   string
+	input    string
+	messages []Message
 }
 
 func newUserRequest[T any](i string) *userRequest[T] {
-  return &userRequest[T]{input: i}
+	return &userRequest[T]{input: i}
 }
 
-func (b *userRequest[T]) string() (string, error) {
-	if b.built != "" {
-		return b.built, nil
+func (b *userRequest[T]) prompt() ([]Message, error) {
+	if b.messages != nil {
+		return b.messages, nil
 	}
 
-	var sb strings.Builder
 	var schema T
 	name, def, err := structDef(reflect.TypeOf(schema))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	sb.WriteString(newline(b.schema(name, def)))
-	sb.WriteString(newline(b.prompt()))
-	b.built = sb.String()
+	b.messages = append(b.messages, newSystemMessage(b.schema(name, def)))
+	b.messages = append(b.messages, newUserMessage(b.userMessage()))
+	b.messages = append(b.messages, newSystemMessage(b.instructions()))
 
-	return b.built, nil
+	return b.messages, nil
 }
 
-func (b *userRequest[T]) prompt() string {
+func (b *userRequest[T]) userMessage() string {
 	var sb strings.Builder
 	sb.WriteString(newline("The following is a user request:"))
 	sb.WriteString(newline(b.input))
-	sb.WriteString(newline(userRequestPromptInstructions))
 
 	return sb.String()
+}
+
+func (b *userRequest[T]) instructions() string {
+	return userRequestPromptInstructions
 }
 
 func (b *userRequest[T]) schema(name, def string) string {
