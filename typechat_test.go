@@ -3,6 +3,7 @@ package typechat
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 	"testing"
 )
 
@@ -87,6 +88,89 @@ func TestTypeChat(t *testing.T) {
 		}
 		if result.Steps[1].Name != "Step2" {
 			t.Errorf("Expected Step2, got %v", result.Steps[1].Name)
+		}
+	})
+}
+
+func TestProgram(t *testing.T) {
+	t.Run("serialization of Program instance to JSON", func(t *testing.T) {
+		program := Program{
+			Steps: []FunctionCall{
+				{Name: "Function1", Args: []interface{}{"arg1", 123}},
+				{Name: "Function2", Args: []interface{}{"arg2", true}},
+			},
+		}
+		expectedJSON := `{"Steps":[{"Name":"Function1","Args":["arg1",123]},{"Name":"Function2","Args":["arg2",true]}]}`
+		bytes, err := json.Marshal(program)
+		if err != nil {
+			t.Fatalf("Failed to serialize Program: %v", err)
+		}
+		if string(bytes) != expectedJSON {
+			t.Errorf("Serialized Program did not match expected JSON. Got: %s, Want: %s", string(bytes), expectedJSON)
+		}
+	})
+
+	t.Run("deserialization of JSON to Program instance", func(t *testing.T) {
+		jsonInput := `{"Steps":[{"Name":"Function1","Args":["arg1",123]},{"Name":"Function2","Args":["arg2",true]}]}`
+		expectedProgram := Program{
+			Steps: []FunctionCall{
+				{Name: "Function1", Args: []interface{}{"arg1", 123}},
+				{Name: "Function2", Args: []interface{}{"arg2", true}},
+			},
+		}
+		var program Program
+		err := json.Unmarshal([]byte(jsonInput), &program)
+		if err != nil {
+			t.Fatalf("Failed to deserialize JSON to Program: %v", err)
+		}
+		if !reflect.DeepEqual(program, expectedProgram) {
+			t.Errorf("Deserialized Program did not match expected. Got: %+v, Want: %+v", program, expectedProgram)
+		}
+	})
+
+	t.Run("Program with various FunctionCall configurations", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			program  Program
+			expected string
+		}{
+			{
+				name: "empty Program",
+				program: Program{
+					Steps: []FunctionCall{},
+				},
+				expected: `{"Steps":[]}`,
+			},
+			{
+				name: "single FunctionCall with no args",
+				program: Program{
+					Steps: []FunctionCall{{Name: "Function1"}},
+				},
+				expected: `{"Steps":[{"Name":"Function1","Args":null}]}`,
+			},
+			{
+				name: "multiple FunctionCalls with mixed args",
+				program: Program{
+					Steps: []FunctionCall{
+						{Name: "Function1", Args: []interface{}{"arg1", 123}},
+						{Name: "Function2", Args: []interface{}{}},
+						{Name: "Function3", Args: []interface{}{"arg3", false}},
+					},
+				},
+				expected: `{"Steps":[{"Name":"Function1","Args":["arg1",123]},{"Name":"Function2","Args":[]},{"Name":"Function3","Args":["arg3",false]}]}`,
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				bytes, err := json.Marshal(test.program)
+				if err != nil {
+					t.Fatalf("Failed to serialize Program: %v", err)
+				}
+				if string(bytes) != test.expected {
+					t.Errorf("Serialized Program did not match expected JSON. Got: %s, Want: %s", string(bytes), test.expected)
+				}
+			})
 		}
 	})
 }
