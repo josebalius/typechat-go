@@ -84,3 +84,8 @@ This library is under development and still requires more work to solidify the p
 - Setup CI
 
 Get involved! Lots todo!
+
+## Credits
+
+- Thanks to Mike Kavouras (@mikekavouras) for his contributions.
+- Thanks to Jason Etcovitch (@jasonetco) for his inspiration.
