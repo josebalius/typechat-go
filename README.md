@@ -84,3 +84,7 @@ This library is under development and still requires more work to solidify the p
 - Setup CI
 
 Get involved! Lots todo!
+
+## Credits
+
+We would like to extend our heartfelt thanks to Mike Kavouras (@mikekavouras) and Jason Etcovitch (@jasonetco) for their inspiration and contributions to this project. Their expertise and support have been invaluable in the development of typechat-go.
