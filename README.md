@@ -133,3 +133,5 @@ This library is under development and still requires more work to solidify the p
 - Setup CI
 
 Get involved! Lots todo!
+
+[Lea esto en español](README_ES.md)
