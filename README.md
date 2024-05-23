@@ -71,6 +71,55 @@ program.Steps[1].Args == []any{"I have been promoted!"}
 // You can build a program executor on top of this structure.
 ```
 
+### Error Handling Example
+
+When working with external services or APIs, it's crucial to handle errors gracefully. Below is an example of how to handle errors when using the `Execute` method of the `Prompt` struct.
+
+```go
+ctx := context.Background()
+model := ... // your model client
+
+prompt := typechat.NewPrompt[Classifier](model, "Analyze the sentiment of this text.")
+result, err := prompt.Execute(ctx)
+if err != nil {
+    fmt.Printf("An error occurred: %s\n", err)
+    return
+}
+
+fmt.Printf("Sentiment analysis result: %s\n", result.Sentiment)
+```
+
+This example demonstrates catching and handling errors returned by the `Execute` method, ensuring that your application can respond appropriately to failures.
+
+### Custom Adapter Example
+
+To use a custom adapter with the library, you need to create an adapter that implements the `client` interface. Below is an example of how to create a custom adapter and use it with `NewPrompt`.
+
+```go
+type MyCustomAdapter struct {
+    // Custom fields and methods
+}
+
+func (m *MyCustomAdapter) Do(ctx context.Context, prompt []Message) (string, error) {
+    // Implement the logic to send the prompt to your service and return the response
+    return "response from your service", nil
+}
+
+ctx := context.Background()
+adapter := &MyCustomAdapter{}
+
+prompt := typechat.NewPrompt[Classifier](adapter, "Analyze this text with my custom adapter.")
+result, err := prompt.Execute(ctx)
+if err != nil {
+    fmt.Printf("An error occurred: %s\n", err)
+    return
+}
+
+fmt.Printf("Custom adapter result: %s\n", result.Sentiment)
+```
+
+This example demonstrates creating a custom adapter that implements the `client` interface and using it with `NewPrompt` to send prompts to your custom service.
+
 ## Contributing
 
 This library is under development and still requires more work to solidify the provided APIs so use with caution. A release will be done at some point in the near future.
